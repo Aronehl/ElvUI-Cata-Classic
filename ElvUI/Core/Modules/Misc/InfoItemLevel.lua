@@ -393,7 +393,7 @@ function M:UpdateSlotPoints(which, config)
 			slot.enchantText:FontTemplate(itemLevelFont, itemLevelFontSize, itemLevelFontOutline)
 			slot.enchantText:ClearAllPoints()
 
-			local itemLeft, itemRight = i == 16, (E.Retail and i == 17) or (E.Cata and i == 18)
+			local itemLeft, itemRight = i == 16, ((E.Retail or E.Cata) and i == 17) or (E.Cata and i == 18)
 			if itemLeft or itemRight then
 				slot.enchantText:Point(itemLeft and 'BOTTOMRIGHT' or 'BOTTOMLEFT', slot, itemLeft and -40 or 40, 3)
 			elseif E.Cata and i == 17 then -- cata secondary (not ranged)

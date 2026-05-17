@@ -69,16 +69,65 @@ function E:InspectGearSlot(line, lineText, slotInfo)
 	local allow = not E.Cata or ((r == 0 and g == 1 and b == 0) and not strfind(lineText, ITEM_SPELL_TRIGGER_ONEQUIP, nil, true) and not strfind(lineText, AZERITE_RESPEC_BUTTON[E.locale or 'enUS'], nil, true) and not strfind(lineText, '%(%d+ min%)'))
 	if not allow then return end
 
-	local enchant = (not E.Cata and strmatch(lineText, MATCH_ENCHANT)) or (E.Cata and strfind(lineText, '^%+') and not strfind(lineText, BONUS_ARMOR, nil, true) and not strfind(lineText, STAT_MASTERY, nil, true) and lineText)
+	local function GetEnchantLine(lineText)
+		if not lineText then
+			return false
+		end
+
+		local TINKER_USES = {
+			["Greatly increase your run speed for 5 sec. (3 Min Cooldown)"] = "Nitro Boost",
+			["Increases your Intellect, Agility, or Strength by 480 for 10 sec.  Your highest stat is always chosen. (1 Min Cooldown)"] = "Synapse Springs",
+			["Reduces your falling speed for 30 sec. (1 Min Cooldown)"] = "Flexweave Underlay"
+		}
+
+		-- 1) Engineering tinkers / Use: overrides first
+		if strfind(lineText, "Use:", nil, true) then
+			for pattern, name in pairs(TINKER_USES) do
+				if strfind(lineText, pattern, nil, true) then
+					return name
+				end
+			end
+			return false
+		end
+
+		-- 2) Existing enchant logic
+		local isEnchant = (not E.Cata and strmatch(lineText, MATCH_ENCHANT)) or
+													(E.Cata and strfind(lineText, '^%+') and not strfind(lineText, BONUS_ARMOR, nil, true) and
+															not (strfind(lineText, STAT_MASTERY, nil, true) and
+																	not strfind(lineText, STAT_MASTERY .. " Rating", nil, true)))
+
+		if isEnchant then
+			return lineText
+		end
+
+		local ENCHANT_NAMES = {"Landslide", "Power Torrent", "Lightweave Embroidery", "Swordguard Embroidery"}
+
+		-- 3) Named enchants
+		for _, enchantName in ipairs(ENCHANT_NAMES) do
+			if strfind(lineText, enchantName, nil, true) then
+				return lineText
+			end
+		end
+
+		return false
+	end
+
+	local enchant = GetEnchantLine(lineText)
 	if enchant then
 		local color1, color2 = strmatch(enchant, '(|cn.-:).-(|r)')
 		local text = gsub(gsub(enchant, '%s?|A.-|a', ''), '|cn.-:(.-)|r', '%1')
 
 		local shortStrip = gsub(text, '[&+] ?', '')
 		local shortAbbrev = E.db.general.itemLevel.enchantAbbrev and gsub(shortStrip, '(%w%w%w)%w+', '%1')
-		slotInfo.enchantText = format('%s%s%s', color1 or '', text, color2 or '')
-		slotInfo.enchantTextShort = format('%s%s%s', color1 or '', utf8sub(shortAbbrev or shortStrip, 1, 20), color2 or '')
-		slotInfo.enchantTextReal = enchant -- unchanged, contains Atlas and color
+
+		local newText = format('%s%s%s', color1 or '', text, color2 or '')
+    local newShort = format('%s%s%s', color1 or '', utf8sub(shortAbbrev or shortStrip, 1, 20), color2 or '')
+    local newReal = enchant -- unchanged, contains Atlas and color
+
+    slotInfo.enchantText = slotInfo.enchantText and (slotInfo.enchantText .. " + " .. newText) or newText
+    slotInfo.enchantTextShort = slotInfo.enchantTextShort and (slotInfo.enchantTextShort .. " + " .. newShort) or newShort
+    slotInfo.enchantTextReal = slotInfo.enchantTextReal and (slotInfo.enchantTextReal .. " || " .. newReal) or newReal
+
 
 		slotInfo.enchantColors[1] = r
 		slotInfo.enchantColors[2] = g
