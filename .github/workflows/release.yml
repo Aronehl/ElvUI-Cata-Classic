@@ -1,0 +1,42 @@
+name: Create WoW Addon Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: vars
+        run: |
+          echo "version=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Create zip archive
+        run: |
+          ZIP_NAME="ElvUI-Cata-Classic-${{ steps.vars.outputs.version }}.zip"
+
+          zip -r "$ZIP_NAME" \
+            ElvUI \
+            ElvUI_Libraries \
+            ElvUI_Options \
+            -x "*.git*" \
+            -x ".github/*" \
+            -x "README.md"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ElvUI-Cata-Classic-${{ steps.vars.outputs.version }}.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
