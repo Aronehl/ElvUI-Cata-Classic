@@ -100,7 +100,14 @@ function E:InspectGearSlot(line, lineText, slotInfo)
 			return lineText
 		end
 
-		local ENCHANT_NAMES = {"Landslide", "Power Torrent", "Lightweave Embroidery", "Swordguard Embroidery"}
+		local ENCHANT_NAMES = {
+			"Landslide", 
+			"Power Torrent", 
+			"Lightweave Embroidery", 
+			"Swordguard Embroidery",
+      "Rune of the Fallen Crusader"
+		}
+
 
 		-- 3) Named enchants
 		for _, enchantName in ipairs(ENCHANT_NAMES) do
